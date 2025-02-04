@@ -19,7 +19,7 @@ dependencies = [
     "wandb>=0.19.2",
     "ipykernel>=6.29.5",
     "pytest>=8.3.4",
-    "torch[cuda]>=2.6.0",
+    "torch[cuda]==2.5.1",
 ]
 requires-python = ">=3.11,<3.12"
 readme = "README.md"
@@ -27,7 +27,7 @@ license = {text = "MIT"}
 
 [[tool.pdm.source]]
 name = "private"
-url = "https://download.pytorch.org/whl/cu118"
+url = "https://download.pytorch.org/whl/cu124"
 include_packages = ["torch", "torchvision", "torchaudio"]
 exclude_packages = ["*"]
 

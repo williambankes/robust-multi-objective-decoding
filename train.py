@@ -64,8 +64,6 @@ def train(config: DictConfig):
         config.collate_fn, tokenizer=tokenizer, max_length=config.tokenizer.max_length
     )
 
-    print('collate function', collate_func)
-
     train_loader = hydra.utils.instantiate(
         config.dataloader.train, dataset=train_data, collate_fn=collate_func
     )
