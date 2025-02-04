@@ -1,0 +1,95 @@
+# @package _global_
+defaults:
+  - override /model: gpt_2_large_multi_model
+  - override /ref_model: gemma_2_2b_it
+
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: /scratch/ucabwjn/datasets/ultrafeedback_gemma-2-2b-it_num-responses4_maxtokens128_chat-templateTrue_trim200
+  labels:
+    - 'reward_helpsteer-conciseness'
+    - 'reward_ultrafeedback-instruction_following'
+    - 'reward_ultrafeedback-truthfulness'
+    - 'reward_ultrafeedback-honesty'
+    - 'reward_ultrafeedback-helpfulness'
+  train_test_val_split:
+    - 0.8
+    - 0.1995
+    - 0.0005
+  response_name: response
+  apply_prompt_template: False
+  balance_dataset: False
+
+trainer:
+  max_epochs: 1
+
+dataloader:
+  train:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    num_workers: 4
+    pin_memory: True
+    shuffle: True
+  test:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    num_workers: 4
+    pin_memory: True
+    shuffle: True
+
+collate_fn: 
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+  rand_len: True
+
+model:
+  num_heads: 5 # 1
+
+tokenizer:
+  max_length: 1024 # 1024 for gpt2
+  padding_side: 'left'
+
+learner:
+  _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
+  losses: 
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  update_q_hat_every: 10
+
+# Eval script points
+checkpoint_path: null
+max_new_tokens: 128
+score_and_generate: True
+seed: 42
+test: False
+experiment_folder: "sample"
+experiment_name: null
+
+decoder: 
+  _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
+  num_branches: 16
+  weights: [0.2, 0.2, 0.2, 0.2, 0.2]
+  tree_depth: 8
+
+oracle:
+  _target_: robust_multi_objective_decoding.oracles.armoRM.ArmoRMOracle
+  attribute_indices:
+   - 4
+   - 6
+   - 7
+   - 8
+   - 9
+  cache_dir: /scratch/ucabwjn/.cache
+  mode: rewards
+  orcales: null # we set this to override the default MultiOracle 
+
+use_vllm: False
+base_gpu_use: 0.5

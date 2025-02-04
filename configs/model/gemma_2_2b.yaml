@@ -1,0 +1,29 @@
+_target_: robust_multi_objective_decoding.value_function.ActionValueFunctionModule
+
+base_model_hidden_dim: 2304
+token_vocab_size: 256000
+
+torch_dtype: 
+  _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+  dtype: "bfloat16"
+
+base_model:
+  _target_: transformers.AutoModelForCausalLM.from_pretrained
+  pretrained_model_name_or_path: 'google/gemma-2-2b'
+  torch_dtype: 
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: "bfloat16"
+  attn_implementation: 'eager'
+  cache_dir: /scratch/ucabwjn/.cache
+
+lora_config:
+  _target_: peft.LoraConfig
+  r: 16
+  lora_alpha: 16
+  target_modules: 
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+  lora_dropout: 0.1
+  bias: "none"

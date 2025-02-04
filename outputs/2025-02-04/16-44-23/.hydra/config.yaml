@@ -1,0 +1,130 @@
+model:
+  _target_: robust_multi_objective_decoding.multi_objective_value_function.MultiModelValueFunction
+  token_vocab_size: 50304
+  base_model_hidden_dim: 512
+  num_heads: 5
+  torch_dtype:
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: bfloat16
+  base_model:
+    _target_: transformers.AutoModelForCausalLM.from_pretrained
+    pretrained_model_name_or_path: EleutherAI/pythia-70m
+    torch_dtype:
+      _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+      dtype: bfloat16
+    cache_dir: null
+  lora_config: null
+ref_model:
+  _target_: transformers.AutoModelForCausalLM.from_pretrained
+  pretrained_model_name_or_path: google/gemma-2-2b-it
+  torch_dtype:
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: bfloat16
+  attn_implementation: eager
+  cache_dir: /scratch/ucabwjn/.cache
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: C:\Users\William\Documents\Programming\PhD\Datasets\ultrafeedback_gemma-2-2b-it_num-responses4_maxtokens128_chat-templateTrue_trim200
+  labels:
+  - reward_helpsteer-conciseness
+  - reward_ultrafeedback-instruction_following
+  - reward_ultrafeedback-truthfulness
+  - reward_ultrafeedback-honesty
+  - reward_ultrafeedback-helpfulness
+  train_test_val_split:
+  - 0.8
+  - 0.1995
+  - 0.0005
+  response_name: response
+  apply_prompt_template: false
+  balance_dataset: false
+collate_fn:
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+  - eos
+  - eos
+  - eos
+  - eos
+  - eos
+  rand_len: true
+tokenizer:
+  max_length: 1024
+  padding_side: left
+learner:
+  _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
+  losses:
+  - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  update_q_hat_every: 10
+  discount_factor: 0.95
+trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: gpu
+  devices:
+  - 0
+  max_epochs: 1
+  limit_val_batches: 150
+  val_check_interval: 500
+  accumulate_grad_batches: 4
+dataloader:
+  train:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    num_workers: 4
+    pin_memory: true
+    shuffle: true
+  val:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 12
+    num_workers: 4
+    pin_memory: true
+    shuffle: false
+  test:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    num_workers: 4
+    pin_memory: true
+    shuffle: true
+callbacks:
+  checkpoint_callback:
+    filename: transformer-{step:02d}-{validation_iql_loss:.2f}
+    save_top_k: 1
+    monitor: val_loss
+logger:
+  project: safe-decoding
+  log_model: false
+  save_dir: experiment_dir
+  name: multi-obj-gemma-2-2b
+checkpoint_path: null
+max_new_tokens: 128
+score_and_generate: true
+seed: 42
+test: false
+experiment_folder: sample
+experiment_name: null
+oracle:
+  _target_: robust_multi_objective_decoding.oracles.armoRM.ArmoRMOracle
+  attribute_indices:
+  - 4
+  - 6
+  - 7
+  - 8
+  - 9
+  cache_dir: /scratch/ucabwjn/.cache
+  mode: rewards
+  orcales: null
+decoder:
+  _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
+  num_branches: 16
+  weights:
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
+  - 0.2
+  tree_depth: 8
+use_vllm: false
+base_gpu_use: 0.5

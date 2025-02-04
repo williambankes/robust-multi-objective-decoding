@@ -1,0 +1,4 @@
+- +experiment=gpt2large_multimodel_ultrafeedback_5vals_cdfudge
+- model=pythia_70m_multi_model
+- ++dataset.data_path=C:\Users\William\Documents\Programming\PhD\Datasets\ultrafeedback_gemma-2-2b-it_num-responses4_maxtokens128_chat-templateTrue_trim200
+- ++trainer.devices=[0]

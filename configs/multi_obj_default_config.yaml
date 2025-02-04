@@ -1,0 +1,87 @@
+defaults:
+  - model: gemma_2_2b_multi_weighted.yaml
+  - ref_model: gemma_2_2b.yaml
+
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: datasets/PKU_safety-processed-02-01-25
+  labels:
+    - 'binary_safety'
+  train_test_val_split:
+    - 0.8
+    - 0.1
+    - 0.1
+  response_name: response_0_gemma-2-2b
+  apply_prompt_template: False
+  balance_dataset: False
+
+collate_fn: 
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+    - 'eos'
+  rand_len: False
+
+tokenizer:
+  max_length: 2048
+  padding_side: 'left'
+
+learner:
+  _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
+  losses: 
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  update_q_hat_every: 10
+  discount_factor: 0.95
+
+trainer:
+  _target_: pytorch_lightning.Trainer
+  accelerator: "gpu"
+  devices: "1,2"
+  max_epochs: 15
+  limit_val_batches: 150
+  val_check_interval: 500
+  accumulate_grad_batches: 4
+
+dataloader:
+  train:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 12
+    num_workers: 4
+    pin_memory: True
+    shuffle: True
+  val:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 12
+    num_workers: 4
+    pin_memory: True
+    shuffle: False
+  test:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 12
+    num_workers: 4
+    pin_memory: True
+    shuffle: False
+
+callbacks:
+  checkpoint_callback:
+    filename: "transformer-{step:02d}-{validation_iql_loss:.2f}"
+    save_top_k: 1
+    monitor: "val_loss"
+
+logger:
+  project: "safe-decoding"
+  log_model: False
+  save_dir: experiment_dir
+  name: "multi-obj-gemma-2-2b"
+
+# Parameters for the eval.py script 
+checkpoint_path: null
+max_new_tokens: null
+score_and_generate: null
+seed: 42
+test: False
+experiment_folder: "multi-objective-test"
+experiment_name: "multi-objective-test"
+
+# Oracle
+oracle: null 
+

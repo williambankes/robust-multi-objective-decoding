@@ -1,0 +1,52 @@
+# @package _global_
+defaults:
+  - override /model: gemma_2_2b_multi_head
+  - override /ref_model: gemma_2_2b_it
+
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: /raid/swyoon/safe-decoding/datasets/valueprism_gemma-2-2b-it
+  labels:
+    - 'valence_Autonomy'
+  train_test_val_split:
+    - 0.8
+    - 0.1
+    - 0.1
+  response_name: response
+  apply_prompt_template: False
+  balance_dataset: False
+
+collate_fn: 
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+    - 'eos'
+  rand_len: True
+
+model:
+  num_heads: 1
+
+tokenizer:
+  padding_side: 'left'
+
+# Eval script points
+checkpoint_path: null
+max_new_tokens: 256 
+score_and_generate: True
+seed: 42
+test: False
+experiment_folder: "gemma-valueprism-bon"
+
+decoder: 
+  _target_: robust_multi_objective_decoding.decoders.best_of_n_safety_oracle_decoder.BestOfNOracleDecoder
+  num_branches: 1
+  weights: [1.0]
+  tree_depth: 256 
+
+oracle:
+  _target_: robust_multi_objective_decoding.oracles.kaleido.KaleidoOracle
+  # _target_: robust_multi_objective_decoding.oracles.armoRM.ArmoRMOracle
+  model_name: tsor13/kaleido-xl
+  vrd_idx: [0]
+  cache_dir: /raid/swyoon/safe-decoding/.cache
+  mode: valence 
+  orcales: null # we set this to override the default MultiOracle 

@@ -1,0 +1,19 @@
+_target_: robust_multi_objective_decoding.multi_objective_value_function.MultiModelValueFunction
+
+token_vocab_size: 50304
+base_model_hidden_dim: 512 # for pythia-70m
+num_heads: 1
+
+torch_dtype:
+  _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+  dtype: "bfloat16"
+
+base_model:
+  _target_: transformers.AutoModelForCausalLM.from_pretrained
+  pretrained_model_name_or_path: "EleutherAI/pythia-70m"
+  torch_dtype: 
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: "bfloat16"
+  cache_dir: null
+
+lora_config: null
