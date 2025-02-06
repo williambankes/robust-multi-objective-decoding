@@ -1,7 +1,7 @@
 import os
 import hydra
 import torch
-from typing import List
+import torch.nn as nn
 from omegaconf import DictConfig
 from transformers import AutoTokenizer
 from robust_multi_objective_decoding.utils.utils import setup_huggingface_auth, print_config
@@ -10,17 +10,13 @@ from robust_multi_objective_decoding.constants import ProjectDir
 from robust_multi_objective_decoding.decoders.decoders import DecoderHandler
 from datetime import datetime
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
 from robust_multi_objective_decoding.oracles.oracle import Oracle
-from robust_multi_objective_decoding.decoders.controlled_decoder import ControlledDecoder
-
-from vllm import LLM
 
 
 class EvalModule(pl.LightningModule):
 
     def __init__(
-        self, decoder: ControlledDecoder,
+        self, decoder: nn.Module,
         oracle: Oracle|None,
         tokenizer: AutoTokenizer,
         max_new_tokens:int=20,
@@ -180,14 +176,7 @@ def eval(config: DictConfig):
     )
     
     # Load the reference model
-    if config.get("use_vllm", None):
-        ref_model = LLM(
-            model=config.ref_model.pretrained_model_name_or_path,
-            gpu_memory_utilization=config.base_gpu_use,
-            dtype=config.model.torch_dtype.dtype
-        )
-    else:
-        ref_model = hydra.utils.instantiate(config.ref_model)
+    ref_model = hydra.utils.instantiate(config.ref_model)
 
     # Load the previously trained model from a check point path
     if config.checkpoint_path is not None:
