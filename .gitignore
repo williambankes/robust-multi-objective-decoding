@@ -181,19 +181,7 @@ nohup.out
 
 # Hydra logs
 **/.hydra/*
+pdm.lock
 
-# Data dirs
-shieldgemma-2b/
-shieldgemma-9b/
-outputs/
-
-# cbf_results
-cbf_eval_outputs/**
-eval_outputs/**
-cbf_chkpt_models/**
-multirun/**
-outputs/**
-images/**
-scripts/multi_**
-checkpoints/**
-eval_outputs/**
+outputs/** */
+__pycache__/** */
