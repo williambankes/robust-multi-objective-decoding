@@ -1,6 +1,5 @@
 import torch
-from robust_multi_objective_decoding.decoders.best_of_n_safety_oracle_decoder import BestOfNOracleDecoder
-from robust_multi_objective_decoding.oracles.shield_gemma import HarmType
+from robust_multi_objective_decoding.decoders.best_of_n_oracle_decoder import BestOfNOracleDecoder
 
 ####################### FIXTURES FOR BEST OF N TESTS #######################
 

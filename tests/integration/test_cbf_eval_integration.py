@@ -1,8 +1,7 @@
 import torch
 from robust_multi_objective_decoding.oracles.shield_gemma import HarmType
-from robust_multi_objective_decoding.decoders.best_of_n_safety_oracle_decoder import (
-    BestOfNOracleDecoder,
-    BlockwiseOracleDecoder)
+from robust_multi_objective_decoding.decoders.best_of_n_oracle_decoder import (
+    BestOfNOracleDecoder)
 
 
 def cbf_output_process(decoder_output, batch_size):
@@ -206,24 +205,3 @@ class ProxySafetyOracleSafeTests:
             else: raise NotImplementedError(f'Unknown response: {response.split()[-1]}')
 
         return torch.concat(outputs, dim=0).reshape(-1, len_harms)
-    
-def test_blockwise_filtering_decoder_output_length():
-
-    model = ProxyLanguageModel()
-    tokenizer = ProxyTokenizer()
-    safety_oracle = ProxySafetyOracleSafeTests()
-    decoder = BlockwiseOracleDecoder(reference_model=model,
-                 tokenizer=tokenizer,
-                 safety_oracle=safety_oracle,
-                 safety_prob_cutoff=0.5,
-                 harm_types = [HarmType.DANGEROUS], 
-                 num_branches=8,
-                 tree_depth=8)
-
-    inputs = {'input_ids': torch.ones(4, 6), 'attention_mask': torch.ones(4, 6)}
-    output = decoder.generate(**inputs, max_new_tokens=42, return_dict_in_generate=True)
-
-    out = cbf_output_process(output, 4)
-    
-    assert out['is_safe_record'].shape[0] == (6)
-    assert out['joint_branch_probs_record'].shape == (6, 8)

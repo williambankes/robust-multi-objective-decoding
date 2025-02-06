@@ -1,17 +1,16 @@
 import math
 import time
 import torch
-import numpy as np
 from copy import deepcopy
 import torch.nn as nn
-from robust_multi_objective_decoding.value_function import ValueFunctionModule
+from robust_multi_objective_decoding.multi_objective_value_function import BaseMultiObjectiveValueFunction
 from transformers import PreTrainedTokenizer
 
 class MultiObjectiveControlledDecoder(nn.Module):
 
     def __init__(self,
                  reference_model: nn.Module,
-                 value_function: ValueFunctionModule,
+                 value_function: BaseMultiObjectiveValueFunction,
                  tokenizer: PreTrainedTokenizer,
                  ref_tokenizer: PreTrainedTokenizer,
                  weights: list[float], 
@@ -19,17 +18,13 @@ class MultiObjectiveControlledDecoder(nn.Module):
                  tree_depth: int = 8,
                  max_length: int = 1024,
                  use_adv: bool = False,
-                 minibatch_size: int = 16,
-                 top_k: int = 0,
-                 top_p: float = 1.0,
-                 oracle=None,
                  *args, **kwargs):
 
         super().__init__()
 
         self.ref_model = reference_model
         self.value_function = value_function
-        self.weights = torch.tensor(weights, dtype=torch.float32).view(1,-1,1)
+        self.weights = torch.tensor(weights).view(1,-1,1)
         self.num_branches = num_branches
         self.tree_depth = tree_depth
         self.tokenizer = tokenizer
@@ -37,25 +32,13 @@ class MultiObjectiveControlledDecoder(nn.Module):
         self.tokenizer_diff = True
         self.max_length = max_length
         self.use_adv = use_adv
-        self.top_k = top_k
-        self.top_p = top_p
-        self.oracle = oracle
-        self.minibatch_size = minibatch_size
 
         # If the tokenizers are the same we don't need to do the re-tokenization step:
         if self.ref_tokenizer.name_or_path == self.tokenizer.name_or_path:
             self.tokenizer_diff = False
 
-        self.tokens_finished = [self.ref_tokenizer.eos_token_id]
-        if "gemma-2-2b-it" in self.ref_tokenizer.name_or_path:
-            print("using gemma-2-2b-it: <end_of_turn> in the chat format")
-            self.tokens_finished.append(self.ref_tokenizer.encode("<end_of_turn>")[-1])
-            
-        # assert torch.allclose(self.weights.sum(), torch.tensor(1.0)), "Weights should sum to 1.0"
-        if not torch.allclose(self.weights.sum(), torch.tensor(1.0)):
-            print("Weights do not sum to 1.0")
-            # normalize the weights
-            self.weights = self.weights / self.weights.sum()
+        assert self.weights.sum() == 1.0, "Weights should sum to 1.0"
+
 
     def _eval_value_function(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         """
@@ -73,17 +56,12 @@ class MultiObjectiveControlledDecoder(nn.Module):
             Multiple output heads from the value function
         """
 
-        # Decoder the responses from the reference model:
-        decoded_inputs = self.ref_tokenizer.batch_decode(input_ids,
-                                            skip_special_tokens=True)
-        decoded_inputs = [
-            item.replace("<pad>", "") for item in decoded_inputs
-        ]
-        decoded_inputs = [
-            item.replace("<eos>", "") + "<eos>" if "<eos>" in item else item for item in decoded_inputs
-        ]
+        if self.tokenizer_diff:
 
-        if self.value_function is not None:
+            # Decoder the responses from the reference model:
+            decoded_inputs = self.ref_tokenizer.batch_decode(input_ids,
+                                                skip_special_tokens=True)
+
             # Re-tokenizer the responses using the value function tokenizer
             inputs = self.tokenizer(decoded_inputs,
                                     return_tensors='pt',
@@ -93,22 +71,14 @@ class MultiObjectiveControlledDecoder(nn.Module):
             
             # Map new tokens to the correct device
             inputs = {k: v.to(input_ids.device) for k, v in inputs.items()}
-    
-            with torch.no_grad():
-                values, q_values = self.value_function(**inputs)
-        elif self.value_function is None and self.oracle is not None:
-            prompt_batch = list()
-            response_batch = list()
-            for item in decoded_inputs:
-                idx_response = item.index("model\n") + len("model\n")
-                prompt_batch.append(item[:idx_response])
-                response_batch.append(item[idx_response:])
-            with torch.no_grad():
-                values = self.oracle.score(prompt_batch, response_batch)
-            q_values = torch.zeros_like(values)
+
         else:
-            raise NotImplementedError
-        return values, q_values
+
+            # Repackage the inputs in the same format the tokenizer returns:
+            inputs = {'input_ids': input_ids, 'attention_mask': attention_mask}
+
+        cbf_values, q_values = self.value_function(**inputs)
+        return cbf_values, q_values
     
     def eval(self, input_ids: torch.Tensor, attention_mask: torch.Tensor):
         """
@@ -129,89 +99,6 @@ class MultiObjectiveControlledDecoder(nn.Module):
         return {'num_branches': self.num_branches,
                 'tree_depth': self.tree_depth,
                 'weights': self.weights.cpu().numpy()}
-        
-    def _divided_evaluation(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-        minibatch_size = 16,
-    ):
-        res = list()
-        n_minibatches = input_ids.shape[0]//minibatch_size
-        n_remainer = input_ids.shape[0] % minibatch_size
-
-        with torch.no_grad():
-            for i in range(n_minibatches):
-                values, q_values = self._eval_value_function(
-                    input_ids[i*minibatch_size:(i+1)*minibatch_size],
-                    attention_mask[i*minibatch_size:(i+1)*minibatch_size]
-                )
-                if len(values.shape) > 2:
-                    res.append(values[..., -1])
-                else:
-                    res.append(values)
-            if n_remainer > 0:
-                values, q_values = self._eval_value_function(
-                    input_ids[n_minibatches*minibatch_size:],
-                    attention_mask[n_minibatches*minibatch_size:]
-                )
-                if len(values.shape) > 2:
-                    res.append(values[..., -1])
-                else:
-                    res.append(values)
-        # return torch.stack(res, axis=0)
-        return torch.concatenate(res, axis=0)
-
-    def _divided_generation(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-        max_new_tokens: int,
-        do_sample=True,
-        minibatch_size=16
-    ):
-        iids = input_ids.repeat_interleave(self.num_branches, dim=0)
-        attm = attention_mask.repeat_interleave(self.num_branches, dim=0)
-        res = torch.ones(
-            (iids.shape[0], iids.shape[1] + max_new_tokens)
-        ).to(input_ids.device).to(input_ids.dtype) * self.ref_tokenizer.pad_token_id
-        assert len(res.shape) == len(iids.shape)
-        n_minibatches = iids.shape[0]//minibatch_size
-        n_remainer = iids.shape[0] % minibatch_size
-
-        with torch.no_grad():
-            for i in range(n_minibatches):
-                branches = self.ref_model.generate(
-                    input_ids=iids[i*minibatch_size:(i+1)*minibatch_size],
-                    attention_mask=attm[i*minibatch_size:(i+1)*minibatch_size],
-                    max_new_tokens=max_new_tokens,
-                    num_return_sequences=1,
-                    top_k=self.top_k,
-                    top_p=self.top_p,
-                    do_sample=True
-                )
-                res[
-                    i*minibatch_size:(i+1)*minibatch_size, 
-                    res.shape[1] - branches.shape[1]:
-                ] = branches
-                
-            if n_remainer > 0:
-                branches = self.ref_model.generate(
-                    input_ids=iids[n_minibatches*minibatch_size:],
-                    attention_mask=attm[n_minibatches*minibatch_size:],
-                    max_new_tokens=max_new_tokens,
-                    num_return_sequences=1,
-                    top_k=self.top_k,
-                    top_p=self.top_p,
-                    do_sample=True
-                )
-
-                res[
-                    n_minibatches*minibatch_size:,
-                    res.shape[1] - branches.shape[1]:
-                ] = branches
-                
-        return res
 
     def process_latency_time(self, start_time,
                             pre_generation,
@@ -219,16 +106,16 @@ class MultiObjectiveControlledDecoder(nn.Module):
                             end_time):
         
         # Calculate the latency time for each iteration of the generation process:
-        #setup_time = pre_generation - start_time
+        setup_time = pre_generation - start_time
         init_iter_time = generation_times[0] - pre_generation
-        #shut_down_time = end_time - generation_times[-1]
+        shut_down_time = end_time - generation_times[-1]
 
-        iter_times = [init_iter_time]
+        iter_times = [setup_time + init_iter_time + shut_down_time]
         for i in range(1, len(generation_times)):
 
             latency_time = generation_times[i] - generation_times[i-1]
 
-            iter_times.append(latency_time)
+            iter_times.append(setup_time + latency_time + shut_down_time)
 
         return iter_times
 
@@ -241,12 +128,13 @@ class MultiObjectiveControlledDecoder(nn.Module):
 
         # Reshape the values to reflect the batch size:
         values = values.reshape(batch_size, num_branches)
-        prev_values = prev_values.reshape(batch_size, num_branches)   
+        prev_values = prev_values.reshape(batch_size, num_branches)
+        
         if use_adv:
             adv = values - prev_values
         else: 
             adv = values
-            
+
         # Select the branch which argmaxes along a specific axis:
         output_idxs = torch.argmax(adv, dim=1)
 
@@ -265,18 +153,10 @@ class MultiObjectiveControlledDecoder(nn.Module):
                 *args, **kwargs):
         
         with torch.no_grad():
-            weights = list()
-            l_values = list()
-            l_values_mean = list()
-            l_advs = list()
-            
+
             start_time = time.time()
             batch_size = input_ids.shape[0]
             ref_pad_token_id = self.ref_tokenizer.pad_token_id
-
-            blocks = list()
-            for i in range(batch_size): 
-                blocks.append(list())
 
             # Calculate the number of iterations and the remainder
             num_iterations = int(math.ceil(max_new_tokens/self.tree_depth))
@@ -287,10 +167,9 @@ class MultiObjectiveControlledDecoder(nn.Module):
             branch_attention_mask = branch_attention_mask.repeat_interleave(self.num_branches, dim=0)
 
             # Evalaute the weighted value function for the prompt inputs:
-
-            prev_values = self._divided_evaluation(input_ids, attention_mask)
+            prev_values, _ = self._eval_value_function(input_ids, attention_mask)
             self.weights = self.weights.to(prev_values.device)
-            prev_values = torch.sum(prev_values * self.weights.view(1, -1), dim=1)
+            prev_values = torch.sum(prev_values * self.weights, dim=1)[..., -1]
             prev_values = prev_values.repeat_interleave(self.num_branches, dim=0)
             assert prev_values.shape[0] == input_ids.shape[0] * self.num_branches,\
                 f"initialisation for prev_cbf_values shape: {prev_values.shape}, is incorrect"
@@ -299,8 +178,6 @@ class MultiObjectiveControlledDecoder(nn.Module):
 
             pre_generation = time.time()
             generation_times = list()
-
-            unfinished_seqs = torch.ones(input_ids.shape[0], dtype=torch.bool).to(input_ids.device)
 
             for i in range(num_iterations):
 
@@ -312,14 +189,14 @@ class MultiObjectiveControlledDecoder(nn.Module):
                 unfinished_input_ids = input_ids[~sequence_is_finished]
                 unfinished_attention_mask = attention_mask[~sequence_is_finished]
 
-                branches = self._divided_generation(
-                    input_ids=input_ids,
-                    attention_mask=attention_mask,
-                    max_new_tokens=tree_depth,
-                    do_sample=True,
-                    minibatch_size=self.minibatch_size
-                )
-                len_diff = branches.shape[1] - input_ids.shape[1]
+                # Use the base model to generate the tree: -> attention_mask output of .generate look like when seq 
+                # have different lengths?
+
+                branches = self.ref_model.generate(input_ids=unfinished_input_ids,
+                                        attention_mask=unfinished_attention_mask,
+                                        max_new_tokens=tree_depth,
+                                        num_return_sequences=self.num_branches,
+                                        do_sample=True)
 
                 # Update attention mask for branches:
                 branch_attention_mask = unfinished_attention_mask.repeat_interleave(self.num_branches, dim=0)
@@ -375,6 +252,7 @@ class MultiObjectiveControlledDecoder(nn.Module):
                 sequence_is_finished = torch.isin(input_ids[:, -1], eos_pad_tokens).\
                                                 to(torch.bool).\
                                                 to(input_ids.device)
+
                 generation_times.append(time.time())
 
                 # If all sequences have finished generating, break the loop
@@ -383,9 +261,7 @@ class MultiObjectiveControlledDecoder(nn.Module):
 
             # Get the final cbf values:
             #final_cbf_values = self._get_cbf_value(input_ids, attention_mask)
-            # final_values, q_values = self._eval_value_function(input_ids, attention_mask)
-            final_values = self._divided_evaluation(input_ids, attention_mask)
-            q_values = torch.zeros_like(final_values)
+            final_values, q_values = self._eval_value_function(input_ids, attention_mask)
 
             end_time = time.time()
             # Process timings
@@ -393,24 +269,9 @@ class MultiObjectiveControlledDecoder(nn.Module):
             total_run_time = [end_time - start_time] * batch_size
             latency_time = self.process_latency_time(start_time, pre_generation, generation_times, end_time)
 
-            weights = torch.cat(weights, axis=0).detach().cpu()
-            l_values = torch.cat(l_values, axis=0).detach().cpu()
-            l_values_mean = torch.cat(l_values_mean, axis=0).detach().cpu()
-            l_advs = torch.cat(l_advs, axis=0).detach().cpu()
-
             if return_dict_in_generate:
-                return {
-                    "generated_ids": input_ids, 
-                    "generated_ids_attn_mask": attention_mask,
-                    # 'values': final_values, 
-                    'values': l_values, 
-                    'values_mean': l_values_mean, 
-                    "advs": l_advs,
-                    'q_values': q_values, 
-                    'total_run_time': total_run_time,
-                    'latency_time': [latency_time]*batch_size,
-                    "weights": weights,
-                    "blocks": blocks
-                    }
+                return {"generated_ids": input_ids, "generated_ids_attn_mask": attention_mask,
+                        'values': final_values, 'q_values': q_values, 'total_run_time': total_run_time,
+                        'latency_time': [latency_time]*batch_size}
             else:
                 return input_ids

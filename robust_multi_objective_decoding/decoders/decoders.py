@@ -36,13 +36,13 @@ class DecoderHandler:
             The tokenizer for the reference model
         """
 
-        if config._target_ == 'safe_decoding.decoders.best_of_n_safety_oracle_decoder.BestOfNOracleDecoder':
+        if config._target_ == 'robust_multi_objective_decoding.decoders.best_of_n_safety_oracle_decoder.BestOfNOracleDecoder':
             return hydra.utils.instantiate(config, reference_model=reference_model, oracle=oracle, tokenizer=ref_tokenizer)
 
-        elif config._target_ == 'safe_decoding.decoders.blockwise_robust_decoder2.BlockwiseRobustDecoder':
+        elif config._target_ == 'robust_multi_objective_decoding.decoders.blockwise_robust_decoder2.BlockwiseRobustDecoder':
             return hydra.utils.instantiate(config, reference_model=reference_model, value_function=value_function, tokenizer=tokenizer, ref_tokenizer=ref_tokenizer, oracle=oracle)
         
-        elif config._target_ == 'safe_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder':
+        elif config._target_ == 'robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder':
             return hydra.utils.instantiate(config, reference_model=reference_model, value_function=value_function, tokenizer=tokenizer, ref_tokenizer=ref_tokenizer)
         
         else:

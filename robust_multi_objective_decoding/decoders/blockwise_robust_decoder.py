@@ -1,20 +1,19 @@
 import math
 import time
 import torch
-import numpy as np
 from copy import deepcopy
 import torch.nn as nn
 from transformers import PreTrainedTokenizer, AutoModelForCausalLM
-from robust_multi_objective_decoding.value_function import ValueFunctionModule
+from robust_multi_objective_decoding.multi_objective_value_function import BaseMultiObjectiveValueFunction
 
-class BlockwiseRobustDecoder2(nn.Module):
+class BlockwiseRobustDecoder(nn.Module):
 
     # TODO: Implement a device test
     # TODO: Check with branch attention mask
 
     def __init__(self,
                  reference_model: AutoModelForCausalLM,
-                 value_function: ValueFunctionModule,
+                 value_function: BaseMultiObjectiveValueFunction,
                  tokenizer: PreTrainedTokenizer,
                  ref_tokenizer: PreTrainedTokenizer,
                  num_branches: int = 8,
