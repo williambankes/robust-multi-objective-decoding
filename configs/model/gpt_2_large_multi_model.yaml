@@ -1,0 +1,19 @@
+_target_: robust_multi_objective_decoding.multi_objective_value_function.MultiModelValueFunction
+num_heads: 1
+base_model_hidden_dim: 1280
+token_vocab_size: 50257
+
+torch_dtype: 
+  _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+  dtype: "bfloat16"
+
+base_model:
+  _target_: transformers.AutoModelForCausalLM.from_pretrained
+  pretrained_model_name_or_path: 'Ray2333/gpt2-large-harmless-reward_model'
+  torch_dtype: 
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: "bfloat16"
+  attn_implementation: 'eager'
+  cache_dir: /scratch/ucabwjn/.cache
+
+lora_config: null

@@ -1,0 +1,18 @@
+_target_: robust_multi_objective_decoding.multi_objective_value_function.MultiHeadValueFunction
+num_heads: 1
+base_model_hidden_dim: 2304
+token_vocab_size: 256000
+
+torch_dtype: 
+  _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+  dtype: "bfloat16"
+
+base_model:
+  _target_: transformers.AutoModelForCausalLM.from_pretrained
+  pretrained_model_name_or_path: 'google/gemma-2-2b-it'
+  torch_dtype: 
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: "bfloat16"
+  attn_implementation: 'eager'
+
+lora_config: null

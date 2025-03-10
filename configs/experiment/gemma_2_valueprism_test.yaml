@@ -1,0 +1,80 @@
+# @package _global_
+defaults:
+  - override /model: gemma_2_2b_multi_head
+  - override /ref_model: gemma_2_2b_it
+
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: /raid/swyoon/safe-decoding/datasets/valueprism_gemma-2-2b-it
+  labels:
+    - 'valence_Autonomy'
+  train_test_val_split:
+    - 0.8
+    - 0.1
+    - 0.1
+  response_name: response
+  apply_prompt_template: False 
+  balance_dataset: False
+
+trainer:
+  max_epochs: 2
+
+dataloader:
+  train:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 1
+    num_workers: 4
+    pin_memory: True
+    shuffle: True
+
+collate_fn: 
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+    - 'eos'
+  rand_len: False
+
+model:
+  num_heads: 1
+
+tokenizer:
+  max_length: 2048
+  padding_side: 'left'
+
+learner:
+  _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
+  losses: 
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  update_q_hat_every: 10
+  discount_factor: 0.95
+
+# Eval script points
+checkpoint_path: /scratch/ucabwjn/checkpoints/gemma-ultrafeedback/multi-objective-test_20250108_113528/1736336134/transformer-step=6250-validation_iql_loss=0.00.ckpt
+max_new_tokens: 128
+score_and_generate: True
+seed: 42
+test: False
+experiment_folder: "gemma-valueprism"
+
+decoder: 
+  _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
+  num_branches: 1
+  weights: [1.0]
+  tree_depth: 10
+  
+oracle:
+  _target_: robust_multi_objective_decoding.oracles.kaleido.KaleidoOracle
+  # _target_: robust_multi_objective_decoding.oracles.armoRM.ArmoRMOracle
+  model_name: tsor13/kaleido-xl
+  vrd_idx: [0]
+  cache_dir: /raid/swyoon/safe-decoding/.cache
+  mode: valence 
+  orcales: null # we set this to override the default MultiOracle 
+
+# base_model:
+#   _target_: transformers.AutoModelForCausalLM.from_pretrained
+#   pretrained_model_name_or_path: 'google/gemma-2-2b-it'
+#   torch_dtype: 
+#     _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+#     dtype: "bfloat16"
+#   attn_implementation: 'eager'
+

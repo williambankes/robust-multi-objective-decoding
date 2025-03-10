@@ -1,0 +1,103 @@
+# @package _global_
+defaults:
+  - override /model: gemma_2_2b_multi_head
+  - override /ref_model: gemma_2_2b_it
+
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: /raid/swyoon/safe-decoding/datasets/valueprism_gemma-2-2b-it
+  labels:
+    - 'valence_Autonomy'
+    - 'valence_Right to life'
+    - 'valence_Justice'
+    - 'valence_Compassion'
+    - 'valence_Well-being'
+    - 'valence_Duty of care'
+    - 'valence_Respect'
+    - 'valence_Safety'
+    - 'valence_Right to property'
+    - 'valence_Responsibility'
+  train_test_val_split:
+    - 0.8
+    - 0.1
+    - 0.1
+  response_name: response
+  apply_prompt_template: False 
+  balance_dataset: False
+
+trainer:
+  max_epochs: 3
+
+dataloader:
+  train:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 1
+    num_workers: 4
+    pin_memory: True
+    shuffle: True
+
+collate_fn: 
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+    # adjust this to the number of labels
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+    - 'eos'
+  rand_len: False
+
+model:
+  num_heads: 10  # TODO: adjust this to the number of labels
+
+tokenizer:
+  max_length: 2048
+  padding_side: 'left'
+
+learner:
+  _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
+  losses: 
+    # adjust this to the number of labels
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  update_q_hat_every: 10
+  discount_factor: 0.95
+
+# Eval script points
+checkpoint_path: /home/swyoon/checkpoints/gemma-valueprism-10/multi-objective-test_20250120_111111/1737359494/transformer-step=164394-validation_iql_loss=0.00.ckpt
+max_new_tokens: 128
+score_and_generate: True
+seed: 42
+test: False
+experiment_folder: "gemma-valueprism-10"
+
+decoder: 
+  _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
+  num_branches: 1
+  weights: [0.25, 0.25, 0.25, 0.25]
+  tree_depth: 10
+
+oracle:
+  _target_: robust_multi_objective_decoding.oracles.kaleido.KaleidoOracle
+  model_name: tsor13/kaleido-xl
+  vrd_idx: [0,1,2,3,4,5,6,7,8,9]
+  cache_dir: /raid/swyoon/safe-decoding/.cache
+  mode: valence 
+  orcales: null # we set this to override the default MultiOracle 
+
+
+use_vllm: False
+base_gpu_use: 0.9

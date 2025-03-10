@@ -1,0 +1,27 @@
+_target_: robust_multi_objective_decoding.value_function.ValueFunctionModule
+base_model_hidden_dim: 2048
+torch_dtype: 
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: "bfloat16"
+
+base_model:
+  _target_: transformers.AutoModelForCausalLM.from_pretrained
+  pretrained_model_name_or_path: "EleutherAI/pythia-1.4b"
+  torch_dtype: 
+    _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
+    dtype: "bfloat16"
+
+lora_config:
+  _target_: peft.LoraConfig
+  r: 16
+  lora_alpha: 16
+
+  # Config for Pythia models
+  target_modules:
+    - "query_key_value"
+    - "dense"
+    - "dense_h_to_4h"
+    - "dense_4h_to_h"
+
+  lora_dropout: 0.1
+  bias: "none"
