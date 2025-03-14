@@ -75,9 +75,6 @@ class ProxyLanguageModelUnSafeBestofNTests:
         # Return mix of good values != 3, and bad values == 3:
         output = torch.ones(num_return_sequences, input_ids.shape[1] + max_new_tokens)
 
-        # Generate a random id:
-        idx = torch.randint(0, num_return_sequences, (1,)).item()
-
         output[:, input_ids.shape[1] :] = 3
         # output[idx, input_ids.shape[1]:] = 2
 

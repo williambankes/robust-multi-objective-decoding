@@ -31,7 +31,7 @@ def test_load_base_vf_module_state_dict_from_checkpoint():
     with patch(
         "robust_multi_objective_decoding.utils.load_utils.torch.load",
         return_value=proxy_checkpoint,
-    ) as m:
+    ) as _:
         output = load_base_vf_module_state_dict_from_checkpoint(".")
 
     # Write assertion tests on this based on the output:

@@ -153,9 +153,9 @@ def test_create_word_break_tokenizer_collate_fn():
     labels = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0]]
 
     batch = list()
-    for i, l in enumerate(labels):
-        assert len(l) == len(data[i].split())
-        batch.append((idx[i], prompt[i], data[i], l))
+    for i, label in enumerate(labels):
+        assert len(label) == len(data[i].split())
+        batch.append((idx[i], prompt[i], data[i], label))
 
     collate_fn = create_word_break_tokenizer_collate_fn(tokenizer, max_length=100)
 
@@ -342,9 +342,9 @@ def test_classifier_collate_fn():
     labels = [[1, 1, 1, 1, 1, 1, 1, 0, 0, 1], [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0]]
 
     batch = list()
-    for i, l in enumerate(labels):
-        assert len(l) == len(data[i].split())
-        batch.append((idx[i], prompt[i], data[i], l))
+    for i, label in enumerate(labels):
+        assert len(label) == len(data[i].split())
+        batch.append((idx[i], prompt[i], data[i], label))
 
     collate_fn = create_classifier_collate_fn(tokenizer, max_length=100)
 

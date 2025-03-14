@@ -71,7 +71,7 @@ def pad_safety_labels(
 
     try:
         return torch.tensor(label_output)
-    except Exception as e:
+    except Exception:
         breakpoint()
 
 
