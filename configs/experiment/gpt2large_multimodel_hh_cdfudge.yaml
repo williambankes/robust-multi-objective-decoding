@@ -1,0 +1,68 @@
+# @package _global_
+defaults:
+  - override /model: gpt_2_large_multi_model
+  - override /ref_model: gemma_2_2b_it
+
+dataset:
+  _target_: robust_multi_objective_decoding.data.multiobjective_dataset.MultiObjectiveDataset
+  data_path: YOUR_DATA_PATH
+  labels:
+    - 'rewards_harmless'
+    - 'rewards_helpful'
+  train_test_val_split:
+    - 0.8
+    - 0.195
+    - 0.005
+  response_name: response
+  apply_prompt_template: False
+  balance_dataset: False
+
+trainer:
+  max_epochs: 1
+
+dataloader:
+  train:
+    _target_: torch.utils.data.DataLoader
+    batch_size: 2
+    num_workers: 4
+    pin_memory: True
+    shuffle: True
+
+collate_fn: 
+  _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
+  reward_collations:
+    - 'eos'
+    - 'eos'
+  rand_len: True
+
+model:
+  num_heads: 2
+
+tokenizer:
+  max_length: 1024 # 1024 for gpt2
+  padding_side: 'left'
+
+learner:
+  _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
+  losses: 
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+    - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
+  update_q_hat_every: 10
+
+# Eval script points
+checkpoint_path: YOUR_CHECKPOINT_PATH
+max_new_tokens: 128
+score_and_generate: True
+seed: 42
+test: False
+experiment_folder: "sample"
+
+decoder: 
+  _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
+  num_branches: 1
+  weights: [0.5,0.5]
+  tree_depth: 10
+
+oracle:
+  _target_: robust_multi_objective_decoding.oracles.hh_harmlessness.HHHarmlessnessOracle
+  orcales: null # we set this to override the default MultiOracle 
