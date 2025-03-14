@@ -26,11 +26,17 @@ source .venv/bin/activate
 
 # Quick Run
 
-To train a value function on the  for controlled decoding run the following
+To train a value function on the HH dataset run the following command, replacing <DATA_PATH_HERE> with a path to an HH dataset. The dataset should have columns named 'prompt', 'response', 'reward_helpful', and 'reward_harmless' 
 ```bash
-
+python train.py +experiment=gpt2large_multimodel_hh_cdfudge ++dataset=<DATA_PATH_HERE> ++trainer.devices=[<GPU_IDS_HERE>]
 ```
 
+To evaluate the trained value function use the following command:
+
+```bash
+python eval.py +experiment=gpt2large_multimodel_hh_cdfudge ++dataset=<DATA_PATH_HERE> ++trainer.devices=[<GPU_IDS_HERE>] checkpoint_path=<CHECKPOINT_PATH>
+```
+Where the CHECKPOINT_PATH points to the saved checkpoint of the model run above.
 
 # 
 
