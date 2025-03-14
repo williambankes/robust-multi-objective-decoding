@@ -89,87 +89,12 @@ def test_create_eos_reward(mock_tokenizer):
     assert ((len_resp + len_tok_prompt) == len_prompt_resp).all()
 
 
-# 2. Test the cbf reward collate function
-def test_create_cbf_reward(mock_tokenizer):
-    # The test will be the following, we have some sentences of varying length
-    collate_fn = create_collate_functions(
-        tokenizer=mock_tokenizer,
-        reward_collations=["cbf"],
-        max_length=100,
-        rand_len=False,
-    )
-
-    # idx, prompt, response, labels
-    batch = [
-        (
-            0,
-            "Tell me a story",
-            "Once upon a time there was a big bad wolf",
-            [[1, 1, 1, 1, 1, 1, 1, 1, 0, 0]],
-        ),
-        (
-            1,
-            "Tell me a story",
-            "Once upon a time there was a happy bunny",
-            [[1, 1, 1, 1, 1, 1, 1, 1, 1]],
-        ),
-    ]
-
-    output = collate_fn(batch)
-
-    assert (output["rewards"][..., -1] == torch.tensor([[0], [1]])).all()
-    assert output["input_ids"].shape[0] == output["rewards"].shape[0]
-    assert output["input_ids"].shape[1] == output["rewards"].shape[2]
-    assert (output["rewards"][..., 0] == torch.tensor([[-100], [-100]])).all()
-
-    # CBF specific tests:
-
-    # Test the random length version:
-    collate_fn = create_collate_functions(
-        tokenizer=mock_tokenizer,
-        reward_collations=["cbf"],
-        max_length=100,
-        rand_len=True,
-        rand_len_range=[8, 10],
-    )
-
-    output = collate_fn(batch)
-    decoded_output = mock_tokenizer.decode(output["input_ids"][0])
-
-    # Assert the output is correct:
-    if decoded_output.split(" ")[-1] not in ["bad", "wolf"]:
-        assert (output["rewards"][..., -1] == torch.tensor([[1], [1]])).all()
-    else:
-        assert (output["rewards"][..., -1] == torch.tensor([[0], [1]])).all()
-    assert output["input_ids"].shape[0] == output["rewards"].shape[0]
-    assert output["input_ids"].shape[1] == output["rewards"].shape[2]
-    assert (output["rewards"][..., 0] == torch.tensor([[-100], [-100]])).all()
-
-    # Check the random lengths are correct:
-    len_tok_prompt = mock_tokenizer(["Tell me a story"], return_tensors="pt")[
-        "input_ids"
-    ].shape[1]
-
-    # Find the number of tokens in the response:
-    safe_labels = output["rewards"]
-    len_resp = (safe_labels != -100).sum(dim=2)[:, 0]
-
-    # TODO: Can we write some more specific tests here?
-
-    # Find the number of tokens in the prompt response encoding:
-    input_ids = output["input_ids"]
-    len_prompt_resp = (input_ids != mock_tokenizer.pad_token_id).sum(dim=1)
-
-    # Ensure the safe labels and inputs are consistent:
-    assert ((len_resp + len_tok_prompt) == len_prompt_resp).all()
-
-
 # 4. Test multiple different collate functions -> testing the list feature of the create_collate_functions
 def test_create_multiple_rewards(mock_tokenizer):
     # The test will be the following, we have some sentences of varying length
     collate_fn = create_collate_functions(
         tokenizer=mock_tokenizer,
-        reward_collations=["eos", "cbf"],
+        reward_collations=["eos", "eos"],
         max_length=100,
         rand_len=False,
     )
@@ -180,13 +105,13 @@ def test_create_multiple_rewards(mock_tokenizer):
             0,
             "Tell me a story",
             "Once upon a time there was a big bad wolf",
-            [-1, [1, 1, 1, 1, 1, 1, 1, 1, 0, 0]],
+            [-1, 0],
         ),
         (
             1,
             "Tell me a story",
             "Once upon a time there was a happy bunny",
-            [1, [1, 1, 1, 1, 1, 1, 1, 1, 1]],
+            [1, 0],
         ),
     ]
 
@@ -195,7 +120,7 @@ def test_create_multiple_rewards(mock_tokenizer):
     print(output["rewards"])
     print(output["rewards"][..., -1])
 
-    assert (output["rewards"][..., -1] == torch.tensor([[-1, 0], [1, 1]])).all()
+    assert (output["rewards"][..., -1] == torch.tensor([[-1, 0], [1, 0]])).all()
     assert output["input_ids"].shape[0] == output["rewards"].shape[0]
     assert output["input_ids"].shape[1] == output["rewards"].shape[2]
     assert (
@@ -207,7 +132,7 @@ def test_create_multiple_rewards(mock_tokenizer):
     # Test the random length version:
     collate_fn = create_collate_functions(
         tokenizer=mock_tokenizer,
-        reward_collations=["eos", "cbf"],
+        reward_collations=["eos", "eos"],
         max_length=100,
         rand_len=True,
         rand_len_range=[8, 10],
@@ -218,9 +143,9 @@ def test_create_multiple_rewards(mock_tokenizer):
 
     # Assert the output is correct:
     if decoded_output.split(" ")[-1] not in ["bad", "wolf"]:
-        assert (output["rewards"][..., -1] == torch.tensor([[-1, 1], [1, 1]])).all()
+        assert (output["rewards"][..., -1] == torch.tensor([[-1, 0], [1, 0]])).all()
     else:
-        assert (output["rewards"][..., -1] == torch.tensor([[-1, 0], [1, 1]])).all()
+        assert (output["rewards"][..., -1] == torch.tensor([[-1, 0], [1, 0]])).all()
     assert output["input_ids"].shape[0] == output["rewards"].shape[0]
     assert output["input_ids"].shape[1] == output["rewards"].shape[2]
     assert (

@@ -100,7 +100,6 @@ class TemporalDifferenceLoss(Loss):
         r: torch.Tensor,
         v: torch.Tensor,
         v_next: torch.Tensor,
-        q: torch.Tensor,
         **kwargs,
     ):
         """
@@ -108,10 +107,10 @@ class TemporalDifferenceLoss(Loss):
         ----------
         r : torch.Tensor[batch_size, seq_len]
             token level rewards r_t
-        v_next : torch.Tensor[batch_size, seq_len]
+        v : torch.Tensor[batch_size, seq_len]
+            token level value function predictions for v(x_{t})
+        v_next : torch.Tensor[batch_size, seq_len - 1]
             token level value function predictions for v(x_{t+1})
-        q : torch.Tensor
-            token level action value function predictions q(x_t, a_t)
 
         Returns
         -------
