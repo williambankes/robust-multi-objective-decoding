@@ -260,7 +260,9 @@ class MultiObjectiveControlledDecoder(nn.Module):
                 )
 
                 # Update previous values to tensor [~sequence_is_finish.sum(), seq_len]
-                prev_values = prev_values[~prev_values_filter].repeat_interleave(
+                # Convert boolean mask to proper indices for indexing
+                unfinished_indices = torch.where(~prev_values_filter)[0]
+                prev_values = prev_values[unfinished_indices].repeat_interleave(
                     self.num_branches, dim=0
                 )
 

@@ -18,7 +18,7 @@ class ProxyLanguageModel:
         **kwargs,
     ):
         output = torch.ones(input_ids.shape[0], input_ids.shape[1] + max_new_tokens)
-        return output.repeat_interleave(num_return_sequences, dim=0)
+        return output.repeat_interleave(num_return_sequences, dim=0).to(torch.long)
 
 
 ######################### FIXTURE FOR SAFE GENERATION TEST #####################

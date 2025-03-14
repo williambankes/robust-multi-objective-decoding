@@ -69,7 +69,10 @@ def pad_safety_labels(
         else:
             label_output = [mask_token] * (max_shape - len(label_output)) + label_output
 
-    return torch.tensor(label_output)
+    try:
+        return torch.tensor(label_output)
+    except Exception as e:
+        breakpoint()
 
 
 def adjust_label_to_token_length(
