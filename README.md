@@ -41,4 +41,6 @@ python eval.py +experiment=gpt2large_multimodel_hh_cdfudge ++dataset=<DATA_PATH_
 ```
 Where the CHECKPOINT_PATH points to the saved checkpoint of the model run above.
 
-#
+# General Usage
+
+The code uses the `pytorch-lightning` framework to manage the training and evaluation code, and `hydra` to manage different configuration files and experiments. Specific experiment configs can be found under `config/experiments` and editted in file or through the command line to specific configurations.   
