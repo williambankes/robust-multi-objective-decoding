@@ -14,7 +14,7 @@ Test-time alignment of Large Language Models (LLMs) to human preferences offers 
 
 # Installation
 
-## Install PDM 
+## Install PDM
 Our repository uses [PDM](https://pdm-project.org/en/latest/) to manage dependencies. To install PDM, follow [official instructions](https://pdm-project.org/en/latest/#installation).
 
 ## Setup Environment
@@ -38,5 +38,4 @@ python eval.py +experiment=gpt2large_multimodel_hh_cdfudge ++dataset=<DATA_PATH_
 ```
 Where the CHECKPOINT_PATH points to the saved checkpoint of the model run above.
 
-# 
-
+#

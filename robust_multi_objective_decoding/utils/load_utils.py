@@ -8,9 +8,10 @@ Created on Tue Sep  3 13:45:59 2024
 import os
 import torch
 
-from typing import List
+from typing import List, Union
 from datasets import load_from_disk, concatenate_datasets, DatasetDict
 from random import randrange
+from robust_multi_objective_decoding.oracles.shield_gemma import HarmType
 
 
 def process_labelled_dataset_locally(
@@ -39,7 +40,6 @@ def process_labelled_dataset_locally(
 
 
 def check_directory_exists(directory_path: str) -> bool:
-
     if os.path.exists(directory_path) and os.path.isdir(directory_path):
         print(f"Directory '{directory_path}' exists.")
         return True
@@ -51,7 +51,6 @@ def check_directory_exists(directory_path: str) -> bool:
 def find_directories_in_directory(
     directory_path: str, verbose: bool = True
 ) -> List[str]:
-
     directories = [
         d
         for d in os.listdir(directory_path)
@@ -65,12 +64,10 @@ def find_directories_in_directory(
 
 
 def load_all_datasets_in_directory(parent_directory: str, verbose: bool = True):
-
     directories = find_directories_in_directory(parent_directory)
 
     datasets = list()
     for dir_name in directories:
-
         dataset_path = os.path.join(parent_directory, dir_name)
 
         if verbose:
@@ -92,7 +89,6 @@ def assign_random_cut(example, idx):
     example["split_idx"] = randrange(length)
     return example
 
-from typing import Union
 
 def load_base_vf_module_state_dict_from_checkpoint(
     checkpoint_path: str, devices: Union[None, List[int]] = None
@@ -104,11 +100,13 @@ def load_base_vf_module_state_dict_from_checkpoint(
     """
 
     if devices is None:
-        map_loc = 'cpu'
+        map_loc = "cpu"
     else:
-        map_loc = f'cuda:{devices[0]}'
+        map_loc = f"cuda:{devices[0]}"
 
-    state_dict = torch.load(checkpoint_path, weights_only=True, map_location=map_loc)["state_dict"]
+    state_dict = torch.load(checkpoint_path, weights_only=True, map_location=map_loc)[
+        "state_dict"
+    ]
     # NOTE: Some very hacky stuff to change the module names
     # This is because the original state dict was saved for a ValueFunctionLearner
     # But here we just want the ValueFunctionModule
@@ -117,9 +115,8 @@ def load_base_vf_module_state_dict_from_checkpoint(
     }
     return state_dict
 
-from robust_multi_objective_decoding.oracles.shield_gemma import HarmType
 
-def oracle_harm_type_lookup(harm_types:List[str]) -> HarmType:
+def oracle_harm_type_lookup(harm_types: List[str]) -> HarmType:
     """
     Lookup for a list of Harmtypes based on string input.
 
@@ -135,10 +132,12 @@ def oracle_harm_type_lookup(harm_types:List[str]) -> HarmType:
     """
 
     oracle_harm_type_lookup = {
-        'DANGEROUS': HarmType.DANGEROUS,
-        'HATE': HarmType.HATE,
-        'SEXUAL': HarmType.SEXUAL,
-        'HARASSMENT': HarmType.HARASSMENT
+        "DANGEROUS": HarmType.DANGEROUS,
+        "HATE": HarmType.HATE,
+        "SEXUAL": HarmType.SEXUAL,
+        "HARASSMENT": HarmType.HARASSMENT,
     }
-    
-    return [oracle_harm_type_lookup.get(harm_type, None) for harm_type in harm_types]  # Return None if harm type not found
+
+    return [
+        oracle_harm_type_lookup.get(harm_type, None) for harm_type in harm_types
+    ]  # Return None if harm type not found

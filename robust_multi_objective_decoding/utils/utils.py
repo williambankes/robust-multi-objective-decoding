@@ -14,7 +14,8 @@ from omegaconf import DictConfig, OmegaConf
 import rich.syntax
 import rich.tree
 
-def parse_int_or_list(value:str) -> int | List[int]:
+
+def parse_int_or_list(value: str) -> int | List[int]:
     """
     Parse int or list inputs from command line
 
@@ -33,42 +34,41 @@ def parse_int_or_list(value:str) -> int | List[int]:
     int|List[int]
         Returns the string converted to either an int or List[int].
     """
-    
-    #Try converting to int:
+
+    # Try converting to int:
     try:
         return int(value)
-    
-    except (ValueError):
-        
+
+    except ValueError:
         # If it's not an int, assume it's a list
         try:
-            strip_brackets = value.strip('[]')
-            
-            #Deal with the case where the list has length 1
-            if len(strip_brackets.split(',')) == 1:
+            strip_brackets = value.strip("[]")
+
+            # Deal with the case where the list has length 1
+            if len(strip_brackets.split(",")) == 1:
                 return [int(strip_brackets)]
-            #Deal with the case where the list is length > 1
+            # Deal with the case where the list is length > 1
             else:
-                return list(map(int, value.strip('[]').split(',')))
+                return list(map(int, value.strip("[]").split(",")))
         except (TypeError, AttributeError):
-            
-            raise argparse.ArgumentTypeError(f"Value: {value} should be an integer or a list of integers (e.g., '3' or '[1,2,3]')")
-        
+            raise argparse.ArgumentTypeError(
+                f"Value: {value} should be an integer or a list of integers (e.g., '3' or '[1,2,3]')"
+            )
 
-def setup_huggingface_auth(env_var_name:str='HUGGINGFACE_HUB_TOKEN'):
 
+def setup_huggingface_auth(env_var_name: str = "HUGGINGFACE_HUB_TOKEN"):
     # Setup huggingface hub login
-        huggingface_hub_token = os.getenv(env_var_name)
+    huggingface_hub_token = os.getenv(env_var_name)
 
-        if huggingface_hub_token:
-            # Log in to the Hugging Face Hub using the token
-            login(token=huggingface_hub_token)
-            print("Successfully logged in to Hugging Face Hub.")
-        else:
-            print("HUGGINGFACE_HUB_TOKEN environment variable not set.")
+    if huggingface_hub_token:
+        # Log in to the Hugging Face Hub using the token
+        login(token=huggingface_hub_token)
+        print("Successfully logged in to Hugging Face Hub.")
+    else:
+        print("HUGGINGFACE_HUB_TOKEN environment variable not set.")
 
 
-def setup_checkpoint_dir(checkpoint_dir:str='checkpoints'):
+def setup_checkpoint_dir(checkpoint_dir: str = "checkpoints"):
     """
     Create checkpoint directory
 
@@ -85,16 +85,17 @@ def setup_checkpoint_dir(checkpoint_dir:str='checkpoints'):
     # Create checkpoint directory:
     curr_dir = os.getcwd()
     checkpoint_dir = os.path.join(curr_dir, "checkpoints")
-    
+
     if not os.path.exists(checkpoint_dir):
-        print(f'Creating checkpoint dir: {checkpoint_dir}')
+        print(f"Creating checkpoint dir: {checkpoint_dir}")
         os.mkdir(checkpoint_dir)
-    else: 
-        print(f'Checkpoint dir: {checkpoint_dir} exists')
+    else:
+        print(f"Checkpoint dir: {checkpoint_dir} exists")
 
     return checkpoint_dir
 
-def torch_dtype_lookup(dtype:str) -> torch.dtype:
+
+def torch_dtype_lookup(dtype: str) -> torch.dtype:
     """
     Lookup for torch dtype based on string input.
 
@@ -109,16 +110,17 @@ def torch_dtype_lookup(dtype:str) -> torch.dtype:
         The corresponding torch dtype.
     """
     torch_dtype_lookup = {
-        'bfloat16': torch.bfloat16,
-        'float16': torch.float16,
-        'float32': torch.float32,
-        'float64': torch.float64,
-        'int8': torch.int8,
-        'int16': torch.int16,
-        'int32': torch.int32
+        "bfloat16": torch.bfloat16,
+        "float16": torch.float16,
+        "float32": torch.float32,
+        "float64": torch.float64,
+        "int8": torch.int8,
+        "int16": torch.int16,
+        "int32": torch.int32,
     }
-    
+
     return torch_dtype_lookup.get(dtype, None)  # Return None if dtype not found
+
 
 def print_config(
     config: DictConfig,

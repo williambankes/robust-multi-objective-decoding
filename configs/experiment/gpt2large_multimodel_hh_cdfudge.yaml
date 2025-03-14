@@ -28,7 +28,7 @@ dataloader:
     pin_memory: True
     shuffle: True
 
-collate_fn: 
+collate_fn:
   _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
   reward_collations:
     - 'eos'
@@ -44,7 +44,7 @@ tokenizer:
 
 learner:
   _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
-  losses: 
+  losses:
     - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
     - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
   update_q_hat_every: 10
@@ -57,7 +57,7 @@ seed: 42
 test: False
 experiment_folder: "sample"
 
-decoder: 
+decoder:
   _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
   num_branches: 1
   weights: [0.5,0.5]
@@ -65,4 +65,4 @@ decoder:
 
 oracle:
   _target_: robust_multi_objective_decoding.oracles.hh_harmlessness.HHHarmlessnessOracle
-  orcales: null # we set this to override the default MultiOracle 
+  orcales: null # we set this to override the default MultiOracle

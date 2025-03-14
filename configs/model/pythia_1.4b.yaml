@@ -1,13 +1,13 @@
 _target_: robust_multi_objective_decoding.value_function.ValueFunctionModule
 base_model_hidden_dim: 2048
-torch_dtype: 
+torch_dtype:
     _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
     dtype: "bfloat16"
 
 base_model:
   _target_: transformers.AutoModelForCausalLM.from_pretrained
   pretrained_model_name_or_path: "EleutherAI/pythia-1.4b"
-  torch_dtype: 
+  torch_dtype:
     _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
     dtype: "bfloat16"
 

@@ -25,6 +25,9 @@ requires-python = ">=3.11,<3.12"
 readme = "README.md"
 license = {text = "MIT"}
 
+
+[tool.pdm]
+distribution = true
 [[tool.pdm.source]]
 name = "private"
 url = "https://download.pytorch.org/whl/cu124"
@@ -36,5 +39,8 @@ requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
 
-[tool.pdm]
-distribution = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.1.0",
+]

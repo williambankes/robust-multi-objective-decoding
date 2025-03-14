@@ -22,7 +22,7 @@ dataset:
     - 0.1
     - 0.1
   response_name: response
-  apply_prompt_template: False 
+  apply_prompt_template: False
   balance_dataset: False
 
 trainer:
@@ -36,7 +36,7 @@ dataloader:
     pin_memory: True
     shuffle: True
 
-collate_fn: 
+collate_fn:
   _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
   reward_collations:
     # adjust this to the number of labels
@@ -61,7 +61,7 @@ tokenizer:
 
 learner:
   _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
-  losses: 
+  losses:
     # adjust this to the number of labels
     - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
     - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
@@ -84,7 +84,7 @@ seed: 42
 test: False
 experiment_folder: "gemma-valueprism-10"
 
-decoder: 
+decoder:
   _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
   num_branches: 1
   weights: [0.25, 0.25, 0.25, 0.25]
@@ -95,8 +95,8 @@ oracle:
   model_name: tsor13/kaleido-xl
   vrd_idx: [0,1,2,3,4,5,6,7,8,9]
   cache_dir: /raid/swyoon/safe-decoding/.cache
-  mode: valence 
-  orcales: null # we set this to override the default MultiOracle 
+  mode: valence
+  orcales: null # we set this to override the default MultiOracle
 
 
 use_vllm: False
