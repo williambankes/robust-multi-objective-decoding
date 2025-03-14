@@ -26,13 +26,14 @@ source .venv/bin/activate
 
 # Quick Run
 
-To train a value function on the HH dataset run the following command, replacing <DATA_PATH_HERE> with a path to an HH dataset. The dataset should have columns named 'prompt', 'response', 'reward_helpful', and 'reward_harmless' 
+Brief instructions on how to train and run the experiments on the HH dataset found in our paper. To begin download the [dataset](https://huggingface.co/datasets/Robust-Decoding/HH_gemma-2-2b-it) from our huggingface repo.
+
+To train a value function on the HH dataset run the following command, replacing <DATA_PATH_HERE> with a path to the dataset. 
 ```bash
 python train.py +experiment=gpt2large_multimodel_hh_cdfudge ++dataset=<DATA_PATH_HERE> ++trainer.devices=[<GPU_IDS_HERE>]
 ```
 
 To evaluate the trained value function use the following command:
-
 ```bash
 python eval.py +experiment=gpt2large_multimodel_hh_cdfudge ++dataset=<DATA_PATH_HERE> ++trainer.devices=[<GPU_IDS_HERE>] checkpoint_path=<CHECKPOINT_PATH>
 ```
