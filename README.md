@@ -14,7 +14,7 @@ Test-time alignment of Large Language Models (LLMs) to human preferences offers 
 
 # Installation
 
-## Install PDM 
+## Install PDM
 Our repository uses [PDM](https://pdm-project.org/en/latest/) to manage dependencies. To install PDM, follow [official instructions](https://pdm-project.org/en/latest/#installation).
 
 ## Setup Environment
@@ -32,5 +32,4 @@ To train a value function on the  for controlled decoding run the following
 ```
 
 
-# 
-
+#

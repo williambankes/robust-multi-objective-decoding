@@ -1,10 +1,11 @@
 """
-Script to train a safety CBF. 
- 
+Script to train a safety CBF.
+
 Run the training script using `python train.py`
 
 Options are specified in the `configs/default_config.yaml` file.
 """
+
 import os
 import time
 import hydra
@@ -18,26 +19,26 @@ from robust_multi_objective_decoding.utils.utils import (
     setup_huggingface_auth,
     print_config,
 )
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 @hydra.main(config_path="./configs", config_name="multi_obj_default_config")
 def train(config: DictConfig):
-
     # Print the hydra config
     print_config(config)
 
     # Setup auth and directory structure
     setup_huggingface_auth()
 
-    #TODO: Move this all to utils
-    #checkpoint_dir = setup_checkpoint_dir(config)
-    if config.get('experiment_folder', None) is None:
+    # TODO: Move this all to utils
+    # checkpoint_dir = setup_checkpoint_dir(config)
+    if config.get("experiment_folder", None) is None:
         checkpoint_dir = setup_checkpoint_dir(config)
     experiment_name = f"{config.get('experiment_name', 'decoding-experiment')}_{time.strftime('%Y%m%d_%H%M%S')}"
     checkpoint_dir = os.path.join(config.experiment_folder, experiment_name)
     if not os.path.exists(checkpoint_dir):
-        print(f'Creating checkpoint dir: {checkpoint_dir}')
+        print(f"Creating checkpoint dir: {checkpoint_dir}")
         os.makedirs(checkpoint_dir)
 
     print("cwd", os.getcwd())
@@ -51,7 +52,7 @@ def train(config: DictConfig):
     tokenizer = AutoTokenizer.from_pretrained(
         config.model.base_model.pretrained_model_name_or_path
     )
-    tokenizer.padding_side = 'left'
+    tokenizer.padding_side = "left"
 
     # If the tokenizer does not have a pad token, set it to the eos token
     if tokenizer.pad_token_id is None:
@@ -90,17 +91,17 @@ def train(config: DictConfig):
     else:
         num_training_samples = len(train_data)
         batch_size = config.dataloader.train.batch_size
-        grad_accum = config.trainer.get('accumulate_grad_batches', 1)
+        grad_accum = config.trainer.get("accumulate_grad_batches", 1)
         effective_batch = batch_size * grad_accum
         steps_per_epoch = num_training_samples // effective_batch
         total_steps = steps_per_epoch * config.trainer.max_epochs
 
-    # Create the model and pl lightning model 
+    # Create the model and pl lightning model
     model = hydra.utils.instantiate(config.model)
     pl_model = hydra.utils.instantiate(
-        config.learner, 
+        config.learner,
         base_value_function_module=model,
-        total_training_steps=total_steps
+        total_training_steps=total_steps,
     )
 
     trainer = hydra.utils.instantiate(
@@ -111,13 +112,14 @@ def train(config: DictConfig):
     trainer.fit(pl_model, train_loader, val_loader)
     # trainer.save_checkpoint("manual_checkpoint.ckpt")
     # print(f"manual checkpoint saved to {os.getcwd()}/manual_checkpoint.ckpt")
-    print('Finished Training')
+    print("Finished Training")
 
     if config.test:
-        print('Running Testing')
+        print("Running Testing")
         trainer.test(pl_model, dataloaders=test_loader)
         torch.save(pl_model.test_outputs, "/scratch/ucabwjn/results/test_outputs.pt")
 
+
 if __name__ == "__main__":
-    torch.set_float32_matmul_precision('medium')
+    torch.set_float32_matmul_precision("medium")
     train()

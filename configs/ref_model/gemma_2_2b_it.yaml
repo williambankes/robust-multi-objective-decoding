@@ -1,6 +1,6 @@
 _target_: transformers.AutoModelForCausalLM.from_pretrained
 pretrained_model_name_or_path: 'google/gemma-2-2b-it'
-torch_dtype: 
+torch_dtype:
   _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
   dtype: "bfloat16"
 attn_implementation: 'eager'

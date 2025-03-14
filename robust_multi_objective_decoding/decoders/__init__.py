@@ -5,5 +5,5 @@ from .blockwise_robust_decoder import BlockwiseRobustDecoder
 __all__ = [
     "BestOfNOracleDecoder",
     "BlockwiseRobustDecoder",
-    "MultiObjectiveControlledDecoder"
+    "MultiObjectiveControlledDecoder",
 ]

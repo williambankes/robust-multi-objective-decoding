@@ -1,10 +1,8 @@
-
 from abc import ABC, abstractmethod
 import torch.nn as nn
 
 
 class Oracle(ABC):
-
     @abstractmethod
     def is_admissible(self) -> bool:
         """Return True if the oracle is admissible, False otherwise
@@ -22,8 +20,8 @@ class Oracle(ABC):
         """Return a score for the prompt response pair"""
         pass
 
-class MultiObjectiveOracle(Oracle, nn.Module):
 
+class MultiObjectiveOracle(Oracle, nn.Module):
     def __init__(self, oracles: list[Oracle]):
         """
         A class for managing multiple different oracles.
@@ -35,13 +33,12 @@ class MultiObjectiveOracle(Oracle, nn.Module):
             _description_
         """
 
-
         self.oracles = oracles
         super().__init__()
 
     def is_admissible(self) -> bool:
         return all(oracle.is_admissible() for oracle in self.oracles)
-    
+
     def score(self, prompt: str, response: str) -> int:
         """
         Return a score for the prompt response pair of each oracle.
@@ -56,13 +53,13 @@ class MultiObjectiveOracle(Oracle, nn.Module):
         Returns
         -------
         list
-            A returned list of variables. 
+            A returned list of variables.
         """
 
         # oracles scores are shape [num_oracles, num_prompts, num_features]
         oracle_scores = [oracle.score(prompt, response) for oracle in self.oracles]
         prompt_scores = list(zip(*oracle_scores))
-    
+
         return prompt_scores
 
 
@@ -88,8 +85,8 @@ class CompositeOracle(Oracle):
         for oracle in self.oracles:
             score *= oracle.score(prompt, response)
         return score
-      
-        
+
+
 def get_tokenwise_scores(
     prompt_tokens: list[str], response_tokens: list[str], oracle: Oracle
 ):

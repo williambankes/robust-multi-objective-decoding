@@ -1,6 +1,4 @@
 import pytest
-import tempfile
-import pathlib
 from robust_multi_objective_decoding.dataset_builder import (
     CompletionDataset,
     Completion,

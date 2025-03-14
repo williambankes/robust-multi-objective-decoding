@@ -33,7 +33,7 @@ class MultiObjectiveDataset(Dataset):
         balance_dataset: bool = False,
         balancing_method: str = Literal["oversample", "downsample"],
         balancing_column: Optional[str] = None,
-        single_objective: bool = False
+        single_objective: bool = False,
     ):
         """
         Initializes the MultiObjectiveDataset.
@@ -47,7 +47,7 @@ class MultiObjectiveDataset(Dataset):
             balance_dataset (bool, optional): Whether to balance the dataset. Defaults to False.
             balancing_method (Literal['oversample', 'downsample'], optional): Method to balance the dataset. Required if balance_dataset is True.
             balancing_column (Optional[str], optional): Column to use for balancing. Required if balance_dataset is True.
-            single_objective (bool, optional): Return a single reward vector, not in a list  
+            single_objective (bool, optional): Return a single reward vector, not in a list
         Raises:
             AssertionError: If train_test_val_split does not sum to 1.
             ValueError: If balancing_column is not found in the dataset.
@@ -60,8 +60,9 @@ class MultiObjectiveDataset(Dataset):
         ), f"The train_test_val_split {train_test_val_split} split must sum to 1."
 
         if single_objective:
-            assert len(labels) == 1,\
-            "single_objective cannot be True whilst num labels: {len(labels)} != 1"
+            assert (
+                len(labels) == 1
+            ), "single_objective cannot be True whilst num labels: {len(labels)} != 1"
 
         # Assign inputs
         self.labels = labels
@@ -350,13 +351,12 @@ class MultiObjectiveDataset(Dataset):
         return balanced_dataset.shuffle(seed=42)
 
     def __getitem__(self, idx):
-
         if self.single_objective:
             # Return a single objective
             labels_list = self.data[idx][self.labels[0]]
         else:
             labels_list = [self.data[idx][label] for label in self.labels]
-        
+
         data = self.data[idx][self.response_name]
         prompt = self.data[idx][self.prompt_name]
 

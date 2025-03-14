@@ -2,7 +2,9 @@ import pytest
 
 
 from robust_multi_objective_decoding.oracles.oracle import get_tokenwise_scores
-from robust_multi_objective_decoding.toy_problems.math_equations import InstructionOracle
+from robust_multi_objective_decoding.toy_problems.math_equations import (
+    InstructionOracle,
+)
 
 
 @pytest.fixture

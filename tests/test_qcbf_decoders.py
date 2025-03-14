@@ -8,7 +8,6 @@ from robust_multi_objective_decoding.decoders import (
     ReferenceModelDecoder,
     ReweightingControlledDecoder,
     ThresholdingControlledDecoder,
-    BlockwiseFilteringDecoder,
 )
 
 
@@ -75,15 +74,23 @@ def test_reference_decoder(model_and_vocab_size, input_ids):
     # Check that the number of tokens generated is correct when EOS is not reached
     # Vocab is indexed from zero, so EOS token = vocab_size means EOS will never be generated
     decoder = ReferenceModelDecoder(reference_model=model, eos_token_id=vocab_size)
-    output = decoder.generate(input_ids=input_ids, attention_mask=attn_mask, max_new_tokens=max_tokens_to_generate)
-    output_ids = output['generated_ids']
+    output = decoder.generate(
+        input_ids=input_ids,
+        attention_mask=attn_mask,
+        max_new_tokens=max_tokens_to_generate,
+    )
+    output_ids = output["generated_ids"]
     assert output_ids.shape == (batch_size, seq_len + max_tokens_to_generate)
 
     # Check that the number of tokens generated is correct when EOS is reached
     # Vocab is indexed from zero, so EOS token = vocab_size-1 means EOS will be generated
     decoder = ReferenceModelDecoder(reference_model=model, eos_token_id=vocab_size - 1)
-    output = decoder.generate(input_ids=input_ids, attention_mask=attn_mask, max_new_tokens=max_tokens_to_generate)
-    output_ids = output['generated_ids']
+    output = decoder.generate(
+        input_ids=input_ids,
+        attention_mask=attn_mask,
+        max_new_tokens=max_tokens_to_generate,
+    )
+    output_ids = output["generated_ids"]
     assert output_ids.shape[0] == batch_size
     assert output_ids.shape[1] <= seq_len + max_tokens_to_generate
 
@@ -122,9 +129,14 @@ def test_thresholding_controlled_decoder(
 
     # Check generation produces no tokens with token_id < 5
     max_tokens_to_generate = 5
-    output = decoder.generate(input_ids=input_ids, attention_mask=attn_mask, max_new_tokens=max_tokens_to_generate)
-    output_ids = output['generated_ids']
+    output = decoder.generate(
+        input_ids=input_ids,
+        attention_mask=attn_mask,
+        max_new_tokens=max_tokens_to_generate,
+    )
+    output_ids = output["generated_ids"]
     assert torch.all(output_ids[:, input_ids.shape[1] :] >= 5)
+
 
 def test_reweighting_controlled_decoder(
     model_and_vocab_size, input_ids, action_value_model
@@ -152,6 +164,7 @@ def test_reweighting_controlled_decoder(
         )
     )
 
+
 def test_cbf_one_step_controlled_decoder(
     model_and_vocab_size, input_ids, action_value_model
 ):
@@ -172,7 +185,7 @@ def test_cbf_one_step_controlled_decoder(
     # Check logits are modified
     assert adjusted_logits.shape == original_logits.shape
     assert ~torch.all(torch.isclose(adjusted_logits, original_logits))
-    
+
     # Check behaviour when CBF constraint is violated
     # Create a decoder with a very harsh CBF constraint
     decoder = CBFOneStepControlledDecoder(
@@ -230,5 +243,3 @@ def test_cbf_optimisation_controlled_decoder(
     assert torch.all(adjusted_logits[:, :-1] == torch.log(eps))
     # Logit of EOS token should be unchanged
     assert torch.all(adjusted_logits[:, -1] == original_logits[:, -1])
-
-

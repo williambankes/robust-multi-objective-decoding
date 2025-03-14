@@ -24,4 +24,3 @@ class PunctuationOracle(Oracle):
     def score(self, prompt: str, response: str) -> int:
         lastchar = response[-1]
         return 1 if lastchar in [".", "!", "?"] else 0
-    

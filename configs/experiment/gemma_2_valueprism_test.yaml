@@ -13,7 +13,7 @@ dataset:
     - 0.1
     - 0.1
   response_name: response
-  apply_prompt_template: False 
+  apply_prompt_template: False
   balance_dataset: False
 
 trainer:
@@ -27,7 +27,7 @@ dataloader:
     pin_memory: True
     shuffle: True
 
-collate_fn: 
+collate_fn:
   _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
   reward_collations:
     - 'eos'
@@ -42,7 +42,7 @@ tokenizer:
 
 learner:
   _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
-  losses: 
+  losses:
     - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
   update_q_hat_every: 10
   discount_factor: 0.95
@@ -55,26 +55,25 @@ seed: 42
 test: False
 experiment_folder: "gemma-valueprism"
 
-decoder: 
+decoder:
   _target_: robust_multi_objective_decoding.decoders.multi_obj_controlled_decoder.MultiObjectiveControlledDecoder
   num_branches: 1
   weights: [1.0]
   tree_depth: 10
-  
+
 oracle:
   _target_: robust_multi_objective_decoding.oracles.kaleido.KaleidoOracle
   # _target_: robust_multi_objective_decoding.oracles.armoRM.ArmoRMOracle
   model_name: tsor13/kaleido-xl
   vrd_idx: [0]
   cache_dir: /raid/swyoon/safe-decoding/.cache
-  mode: valence 
-  orcales: null # we set this to override the default MultiOracle 
+  mode: valence
+  orcales: null # we set this to override the default MultiOracle
 
 # base_model:
 #   _target_: transformers.AutoModelForCausalLM.from_pretrained
 #   pretrained_model_name_or_path: 'google/gemma-2-2b-it'
-#   torch_dtype: 
+#   torch_dtype:
 #     _target_: robust_multi_objective_decoding.utils.utils.torch_dtype_lookup
 #     dtype: "bfloat16"
 #   attn_implementation: 'eager'
-

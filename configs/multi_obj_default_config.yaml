@@ -15,7 +15,7 @@ dataset:
   apply_prompt_template: False
   balance_dataset: False
 
-collate_fn: 
+collate_fn:
   _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
   reward_collations:
     - 'eos'
@@ -27,7 +27,7 @@ tokenizer:
 
 learner:
   _target_: robust_multi_objective_decoding.value_function_learner.MultiObjectiveValueFunctionLearner
-  losses: 
+  losses:
     - _target_: robust_multi_objective_decoding.losses.MonteCarloLoss
   update_q_hat_every: 10
   discount_factor: 0.95
@@ -73,7 +73,7 @@ logger:
   save_dir: experiment_dir
   name: "multi-obj-gemma-2-2b"
 
-# Parameters for the eval.py script 
+# Parameters for the eval.py script
 checkpoint_path: null
 max_new_tokens: null
 score_and_generate: null
@@ -83,5 +83,4 @@ experiment_folder: "multi-objective-test"
 experiment_name: "multi-objective-test"
 
 # Oracle
-oracle: null 
-
+oracle: null

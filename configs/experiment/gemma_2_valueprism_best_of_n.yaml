@@ -16,7 +16,7 @@ dataset:
   apply_prompt_template: False
   balance_dataset: False
 
-collate_fn: 
+collate_fn:
   _target_: robust_multi_objective_decoding.data.multi_obj_collate_functions.create_collate_functions
   reward_collations:
     - 'eos'
@@ -30,17 +30,17 @@ tokenizer:
 
 # Eval script points
 checkpoint_path: null
-max_new_tokens: 256 
+max_new_tokens: 256
 score_and_generate: True
 seed: 42
 test: False
 experiment_folder: "gemma-valueprism-bon"
 
-decoder: 
+decoder:
   _target_: robust_multi_objective_decoding.decoders.best_of_n_safety_oracle_decoder.BestOfNOracleDecoder
   num_branches: 1
   weights: [1.0]
-  tree_depth: 256 
+  tree_depth: 256
 
 oracle:
   _target_: robust_multi_objective_decoding.oracles.kaleido.KaleidoOracle
@@ -48,5 +48,5 @@ oracle:
   model_name: tsor13/kaleido-xl
   vrd_idx: [0]
   cache_dir: /raid/swyoon/safe-decoding/.cache
-  mode: valence 
-  orcales: null # we set this to override the default MultiOracle 
+  mode: valence
+  orcales: null # we set this to override the default MultiOracle

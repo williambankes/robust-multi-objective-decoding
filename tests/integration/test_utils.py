@@ -2,46 +2,55 @@ import torch
 import copy
 import os
 
-from robust_multi_objective_decoding.utils.load_utils import load_base_vf_module_state_dict_from_checkpoint
+from robust_multi_objective_decoding.utils.load_utils import (
+    load_base_vf_module_state_dict_from_checkpoint,
+)
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from robust_multi_objective_decoding.value_function import ActionValueFunctionModule
 from robust_multi_objective_decoding.value_function_learner import ValueFunctionLearner
 from torch.utils.data import Dataset
 from pytorch_lightning import Trainer
 from peft import LoraConfig
-from robust_multi_objective_decoding.data.collate_functions import create_word_break_tokenizer_collate_fn
+from robust_multi_objective_decoding.data.collate_functions import (
+    create_word_break_tokenizer_collate_fn,
+)
 
 #################### FIXTURES AND PROXIES ####################
 
+
 class ProxyDataset(Dataset):
-
     def __getitem__(self, idx):
-
         prompt = "What is your name?"
         response = "My name is go away you silly person."
         labels = [-100, -100, -100, -100, 1, 1, 1, 0, 0, 0, 0, 0]
 
         return idx, prompt, response, labels
-    
+
     def __len__(self):
         return 10
 
+
 #################### TESTS ####################
 
+
 def test_run_and_checkpoint_loading():
-    """ Test that the model can correctly loaded from a checkpoint after running training """
+    """Test that the model can correctly loaded from a checkpoint after running training"""
 
     # Construct a model
-    base_model = AutoModelForCausalLM.from_pretrained("EleutherAI/pythia-70m",
-                                                    torch_dtype=torch.bfloat16)
+    base_model = AutoModelForCausalLM.from_pretrained(
+        "EleutherAI/pythia-70m", torch_dtype=torch.bfloat16
+    )
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/pythia-70m")
 
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
     data = ProxyDataset()
-    loader = torch.utils.data.DataLoader(data, batch_size=2,
-                    collate_fn=create_word_break_tokenizer_collate_fn(tokenizer, max_length=128))
+    loader = torch.utils.data.DataLoader(
+        data,
+        batch_size=2,
+        collate_fn=create_word_break_tokenizer_collate_fn(tokenizer, max_length=128),
+    )
 
     model = ActionValueFunctionModule(
         base_model=base_model,
@@ -67,10 +76,7 @@ def test_run_and_checkpoint_loading():
 
     # Fit with 0 steps, so that the model is not changed
     trainer = Trainer(
-        max_steps=0,
-        accelerator='cpu',
-        logger=False,
-        enable_checkpointing=False
+        max_steps=0, accelerator="cpu", logger=False, enable_checkpointing=False
     )
     trainer.fit(learner, loader)
     trainer.save_checkpoint("test_0.ckpt")
@@ -93,10 +99,7 @@ def test_run_and_checkpoint_loading():
 
     # Fit with 1 step, so that the model is changed
     trainer = Trainer(
-        max_steps=1,
-        accelerator='cpu',
-        logger=False,
-        enable_checkpointing=False
+        max_steps=1, accelerator="cpu", logger=False, enable_checkpointing=False
     )
     trainer.fit(learner, loader)
     trainer.save_checkpoint("test_1.ckpt")
@@ -112,7 +115,9 @@ def test_run_and_checkpoint_loading():
         # Here, I implement a hacky way to filter for parameters that should have been updated
         param_is_learnable = "learn" in key
         if param_is_learnable:
-            assert not (orig_state_dict[key] == new_state_dict[key]).all(), f"key: {key}"
+            assert not (
+                orig_state_dict[key] == new_state_dict[key]
+            ).all(), f"key: {key}"
 
     # clean up checkpoint
     os.remove("test_1.ckpt")
