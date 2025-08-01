@@ -69,30 +69,56 @@ NUM_PROMPTS=300
 #     --result_name "gpt4o_DPO_uniform_${NUM_PROMPTS}prompts.csv" \
 #     --num_prompts ${NUM_PROMPTS}
 
+# COL1="response (0.100-16)"
+# python3 run_llm_single_eval.py \
+#     --openai_api_key ${OPENAI_API_KEY} \
+#     --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef0.1_depth16_topk-1_gsTrue.pkl" \
+#     --result_dir "/home/hingdoong/0_codes/robust-multi-objective-decoding/results_llm_single_eval/" \
+#     --result_name "gpt4o_robust_blockwise_vcoef0.1_K16B16_${NUM_PROMPTS}prompts.csv" \
+#     --col1 "${COL1}" \
+#     --num_prompts ${NUM_PROMPTS}
+
+# COL1="response (1.000-16)"
+# python3 run_llm_single_eval.py \
+#     --openai_api_key ${OPENAI_API_KEY} \
+#     --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef1.0_depth16_topk-1_gsTrue.pkl" \
+#     --result_dir "/home/hingdoong/0_codes/robust-multi-objective-decoding/results_llm_single_eval/" \
+#     --result_name "gpt4o_robust_blockwise_vcoef1.0_K16B16_${NUM_PROMPTS}prompts.csv" \
+#     --col1 "${COL1}" \
+#     --num_prompts ${NUM_PROMPTS}
+
+# COL1="response (0.500-16)"
+# python3 run_llm_single_eval.py \
+#     --openai_api_key ${OPENAI_API_KEY} \
+#     --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef0.5_depth64_topk-1_gsTrue.pkl" \
+#     --result_dir "/home/hingdoong/0_codes/robust-multi-objective-decoding/results_llm_single_eval/" \
+#     --result_name "gpt4o_robust_blockwise_vcoef0.5_K16B64_${NUM_PROMPTS}prompts.csv" \
+#     --col1 "${COL1}" \
+#     --num_prompts ${NUM_PROMPTS}
+
 COL1="response (0.100-16)"
 python3 run_llm_single_eval.py \
     --openai_api_key ${OPENAI_API_KEY} \
-    --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef0.1_depth16_topk-1_gsTrue.pkl" \
+    --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef0.1_depth64_topk-1_gsTrue.pkl" \
     --result_dir "/home/hingdoong/0_codes/robust-multi-objective-decoding/results_llm_single_eval/" \
-    --result_name "gpt4o_robust_blockwise_vcoef0.1_K16B16_${NUM_PROMPTS}prompts.csv" \
+    --result_name "gpt4o_robust_blockwise_vcoef0.1_K16B64_${NUM_PROMPTS}prompts.csv" \
     --col1 "${COL1}" \
     --num_prompts ${NUM_PROMPTS}
 
 COL1="response (1.000-16)"
 python3 run_llm_single_eval.py \
     --openai_api_key ${OPENAI_API_KEY} \
-    --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef1.0_depth16_topk-1_gsTrue.pkl" \
+    --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef1.0_depth64_topk-1_gsTrue.pkl" \
     --result_dir "/home/hingdoong/0_codes/robust-multi-objective-decoding/results_llm_single_eval/" \
-    --result_name "gpt4o_robust_blockwise_vcoef1.0_K16B16_${NUM_PROMPTS}prompts.csv" \
+    --result_name "gpt4o_robust_blockwise_vcoef1.0_K16B64_${NUM_PROMPTS}prompts.csv" \
     --col1 "${COL1}" \
     --num_prompts ${NUM_PROMPTS}
 
-COL1="response (0.500-16)"
+COL1="response average (1.000-16)"
 python3 run_llm_single_eval.py \
     --openai_api_key ${OPENAI_API_KEY} \
-    --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_robust_bs1024_branch2-4-8-16_vcoef0.5_depth64_topk-1_gsTrue.pkl" \
+    --data_path1 "/home/hingdoong/0_codes/safe-decoding/eval_outputs/HH/eval_hh_average_bs1024_branch2-4-8-16__depth64_topk-1_gsTrue.pkl" \
     --result_dir "/home/hingdoong/0_codes/robust-multi-objective-decoding/results_llm_single_eval/" \
-    --result_name "gpt4o_robust_blockwise_vcoef0.5_K16B64_${NUM_PROMPTS}prompts.csv" \
+    --result_name "gpt4o_uniform_blockwise_K16B64_${NUM_PROMPTS}prompts.csv" \
     --col1 "${COL1}" \
     --num_prompts ${NUM_PROMPTS}
-
